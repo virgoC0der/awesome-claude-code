@@ -8,7 +8,8 @@ A lightweight tool for sending Slack notifications when Claude Code requires hum
 - 🎨 **Rich Messages**: Create beautiful notifications using Slack Block Kit
 - ⚙️ **Flexible Configuration**: Support for multiple event types and custom triggers
 - 🔒 **Secure**: Manage sensitive information through environment variables
-- 📦 **Zero Dependencies**: Uses only Python standard library
+- 📬 **Dual Mode Support**: Send via Webhook or Direct Message (DM)
+- 📦 **Minimal Dependencies**: Webhook mode uses only Python stdlib, DM mode requires `slack-sdk`
 
 ## 📦 Files
 
@@ -21,6 +22,88 @@ A lightweight tool for sending Slack notifications when Claude Code requires hum
 | `hooks_example.json` | Complete configuration example |
 
 ## 🚀 Quick Start
+
+### Option 1: Direct Message Mode (Recommended)
+
+Send notifications as direct messages to your Slack account.
+
+#### Step 1: Create Slack App and Get Credentials
+
+1. Visit https://api.slack.com/apps and create a new app
+2. Go to **OAuth & Permissions** and add these scopes:
+   - `chat:write`
+   - `users:read`
+3. Install the app to your workspace
+4. Copy the **Bot User OAuth Token** (starts with `xoxb-`)
+5. Get your **Member ID**:
+   ```bash
+   # Visit Slack in browser, click your profile -> Copy member ID
+   # Or use: https://api.slack.com/methods/users.list/test
+   ```
+
+#### Step 2: Install Slack SDK
+
+```bash
+pip install slack-sdk
+```
+
+#### Step 3: Set Environment Variables
+
+```bash
+export SLACK_CLAUDE_CODE_BOT_TOKEN="xoxb-your-bot-token-here"
+export SLACK_MEMBER_ID="U01234567"
+```
+
+Add to `~/.bashrc` or `~/.zshrc` to make it permanent.
+
+#### Step 4: Configure Claude Code
+
+Edit `~/.claude/settings.json`:
+
+```json
+{
+  "hooks": {
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ~/bin/claude_slack_notifier.py --event-type notification --mode dm",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ~/bin/claude_slack_notifier.py --event-type stop --mode dm",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+#### Step 5: Activate in Claude Code
+
+Run in Claude Code:
+```
+/hooks
+```
+Then review and approve the configuration.
+
+---
+
+### Option 2: Webhook Mode
+
+Send notifications to a Slack channel via Incoming Webhooks.
 
 #### Step 1: Get Slack Webhook URL
 
@@ -49,7 +132,7 @@ Edit `~/.claude/settings.json`:
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ~/bin/claude_slack_notifier.py --event-type notification",
+            "command": "python3 ~/bin/claude_slack_notifier.py --event-type notification --mode webhook",
             "timeout": 10
           }
         ]
@@ -61,7 +144,7 @@ Edit `~/.claude/settings.json`:
         "hooks": [
           {
             "type": "command",
-            "command": "python3 ~/bin/claude_slack_notifier.py --event-type stop",
+            "command": "python3 ~/bin/claude_slack_notifier.py --event-type stop --mode webhook",
             "timeout": 10
           }
         ]
@@ -96,10 +179,18 @@ After installation, Claude Code will automatically send notifications in the fol
 ### Manual Testing
 
 ```bash
-# Test sending notifications
+# Test DM mode
 echo '{"notification":"Test message"}' | \
   python3 ~/bin/claude_slack_notifier.py \
   --event-type notification \
+  --mode dm \
+  --message "This is a test message"
+
+# Test Webhook mode
+echo '{"notification":"Test message"}' | \
+  python3 ~/bin/claude_slack_notifier.py \
+  --event-type notification \
+  --mode webhook \
   --message "This is a test message"
 ```
 
@@ -201,6 +292,26 @@ fi
 
 ### Not Receiving Notifications?
 
+**For DM Mode:**
+
+1. Verify environment variables:
+   ```bash
+   echo $SLACK_CLAUDE_CODE_BOT_TOKEN | head -c 20
+   echo $SLACK_MEMBER_ID
+   ```
+
+2. Verify slack-sdk is installed:
+   ```bash
+   python3 -c "import slack_sdk; print('OK')"
+   ```
+
+3. Test the script:
+   ```bash
+   echo '{}' | python3 ~/bin/claude_slack_notifier.py --event-type stop --mode dm --message "Test"
+   ```
+
+**For Webhook Mode:**
+
 1. Verify Webhook URL:
    ```bash
    echo $SLACK_WEBHOOK_URL
@@ -208,8 +319,10 @@ fi
 
 2. Test the script:
    ```bash
-   echo '{}' | python3 ~/bin/claude_slack_notifier.py --event-type stop --message "Test"
+   echo '{}' | python3 ~/bin/claude_slack_notifier.py --event-type stop --mode webhook --message "Test"
    ```
+
+**Common Issues:**
 
 3. Check if Claude Code loaded the configuration:
    ```
@@ -232,12 +345,23 @@ Ensure you're using Python 3.6+:
 python3 --version
 ```
 
+### "slack_sdk not installed" Error?
+
+Install the Slack SDK:
+```bash
+pip install slack-sdk
+# or
+pip3 install slack-sdk
+```
+
 ## 📚 Resources
 
 - [Complete Setup Guide](./SETUP_GUIDE.md)
 - [Claude Code Official Documentation](https://docs.claude.com/en/docs/claude-code/hooks)
+- [Slack API Documentation](https://api.slack.com/methods/chat.postMessage)
 - [Slack Webhooks Documentation](https://api.slack.com/messaging/webhooks)
 - [Slack Block Kit Builder](https://app.slack.com/block-kit-builder)
+- [slack-sdk Documentation](https://slack.dev/python-slack-sdk/)
 
 ## 🤝 Contributing
 

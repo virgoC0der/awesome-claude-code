@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Claude Code Slack Notifier
-Send Claude Code event notifications to Slack
+Send Claude Code event notifications to Slack via Webhook or Direct Message
 """
 
 import os
@@ -12,11 +12,18 @@ from datetime import datetime
 from urllib.request import Request, urlopen
 from urllib.error import URLError, HTTPError
 
+try:
+    from slack_sdk import WebClient
+    from slack_sdk.errors import SlackApiError
+    SLACK_SDK_AVAILABLE = True
+except ImportError:
+    SLACK_SDK_AVAILABLE = False
 
-def send_slack_message(webhook_url, message, blocks=None):
+
+def send_slack_webhook(webhook_url, message, blocks=None):
     """
-    Send message to Slack
-    
+    Send message to Slack via Webhook
+
     Args:
         webhook_url: Slack Webhook URL
         message: Message text
@@ -25,30 +32,72 @@ def send_slack_message(webhook_url, message, blocks=None):
     payload = {
         "text": message
     }
-    
+
     if blocks:
         payload["blocks"] = blocks
-    
+
     try:
         request = Request(
             webhook_url,
             data=json.dumps(payload).encode('utf-8'),
             headers={'Content-Type': 'application/json'}
         )
-        
+
         response = urlopen(request)
         if response.status == 200:
-            print(f"✓ Slack message sent successfully")
+            print(f"✓ Slack webhook message sent successfully")
             return True
         else:
-            print(f"✗ Failed to send Slack message: {response.status}")
+            print(f"✗ Failed to send Slack webhook message: {response.status}")
             return False
-            
+
     except HTTPError as e:
         print(f"✗ HTTP error: {e.code} - {e.reason}")
         return False
     except URLError as e:
         print(f"✗ URL error: {e.reason}")
+        return False
+    except Exception as e:
+        print(f"✗ Unknown error: {str(e)}")
+        return False
+
+
+def send_slack_dm(token, member_id, message, blocks=None):
+    """
+    Send direct message to Slack user using Slack SDK
+
+    Args:
+        token: Slack Bot Token
+        member_id: Slack Member ID
+        message: Message text
+        blocks: Optional Slack block layout
+    """
+    if not SLACK_SDK_AVAILABLE:
+        print("✗ Error: slack_sdk is not installed. Install it with: pip install slack-sdk")
+        return False
+
+    try:
+        client = WebClient(token=token)
+
+        kwargs = {
+            "channel": member_id,
+            "text": message
+        }
+
+        if blocks:
+            kwargs["blocks"] = blocks
+
+        response = client.chat_postMessage(**kwargs)
+
+        if response["ok"]:
+            print(f"✓ Slack DM sent successfully")
+            return True
+        else:
+            print(f"✗ Failed to send Slack DM")
+            return False
+
+    except SlackApiError as e:
+        print(f"✗ Slack API error: {e.response['error']}")
         return False
     except Exception as e:
         print(f"✗ Unknown error: {str(e)}")
@@ -199,27 +248,29 @@ def parse_stdin_json():
 
 def main():
     parser = argparse.ArgumentParser(description='Claude Code Slack Notification Tool')
-    parser.add_argument('--event-type', required=True, 
-                       choices=['notification', 'stop', 'user_prompt_submit', 
+    parser.add_argument('--event-type', required=True,
+                       choices=['notification', 'stop', 'user_prompt_submit',
                                'pre_tool_use', 'post_tool_use'],
                        help='Event type')
-    parser.add_argument('--webhook-url', 
+    parser.add_argument('--mode',
+                       choices=['webhook', 'dm'],
+                       default='dm',
+                       help='Notification mode: webhook or dm (default: dm)')
+    parser.add_argument('--webhook-url',
                        help='Slack Webhook URL (or use SLACK_WEBHOOK_URL environment variable)')
+    parser.add_argument('--token',
+                       help='Slack Bot Token (or use SLACK_CLAUDE_CODE_BOT_TOKEN environment variable)')
+    parser.add_argument('--member-id',
+                       help='Slack Member ID (or use SLACK_MEMBER_ID environment variable)')
     parser.add_argument('--message', help='Custom message')
-    parser.add_argument('--simple', action='store_true', 
+    parser.add_argument('--simple', action='store_true',
                        help='Use simple text message instead of rich text blocks')
-    
+
     args = parser.parse_args()
-    
-    # Get Webhook URL
-    webhook_url = args.webhook_url or os.environ.get('SLACK_WEBHOOK_URL')
-    if not webhook_url:
-        print("Error: Must provide --webhook-url or set SLACK_WEBHOOK_URL environment variable")
-        sys.exit(1)
-    
+
     # Read event data from stdin
     event_data = parse_stdin_json()
-    
+
     # Prepare message content
     details = {}
     if event_data:
@@ -238,15 +289,31 @@ def main():
             details['Prompt'] = event_data['prompt']
         if 'session_id' in event_data:
             details['Session ID'] = event_data['session_id']
-    
-    # Send message
-    if args.simple:
-        message = args.message or f"Claude Code {args.event_type} event"
-        send_slack_message(webhook_url, message)
-    else:
-        blocks = create_notification_blocks(args.event_type, details)
-        default_message = f"Claude Code {args.event_type} event"
-        send_slack_message(webhook_url, args.message or default_message, blocks)
+
+    # Prepare message and blocks
+    default_message = f"Claude Code {args.event_type} event"
+    message = args.message or default_message
+    blocks = None if args.simple else create_notification_blocks(args.event_type, details)
+
+    # Send message based on mode
+    if args.mode == 'webhook':
+        webhook_url = args.webhook_url or os.environ.get('SLACK_WEBHOOK_URL')
+        if not webhook_url:
+            print("Error: Must provide --webhook-url or set SLACK_WEBHOOK_URL environment variable")
+            sys.exit(1)
+        send_slack_webhook(webhook_url, message, blocks)
+    else:  # dm mode
+        token = args.token or os.environ.get('SLACK_CLAUDE_CODE_BOT_TOKEN')
+        member_id = args.member_id or os.environ.get('SLACK_MEMBER_ID')
+
+        if not token:
+            print("Error: Must provide --token or set SLACK_CLAUDE_CODE_BOT_TOKEN environment variable")
+            sys.exit(1)
+        if not member_id:
+            print("Error: Must provide --member-id or set SLACK_MEMBER_ID environment variable")
+            sys.exit(1)
+
+        send_slack_dm(token, member_id, message, blocks)
 
 
 if __name__ == "__main__":

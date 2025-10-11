@@ -77,44 +77,72 @@ This repository includes a powerful hooks system that enables **real-time Slack 
 - 🎨 **Rich Messages**: Beautiful notifications using Slack Block Kit
 - ⚙️ **Flexible Configuration**: Support for multiple event types with custom triggers
 - 🔒 **Secure**: Sensitive information managed through environment variables
-- 📦 **Zero Dependencies**: Uses only Python standard library
+- 📬 **Dual Mode Support**: Send via Webhook (to channels) or Direct Message (to yourself)
+- 📦 **Minimal Dependencies**: Webhook mode uses only Python stdlib, DM mode requires `slack-sdk`
 
 ### Quick Start
 
-1. **Get Slack Webhook URL**
-   - Visit https://api.slack.com/apps
-   - Create a new app and enable Incoming Webhooks
-   - Copy the generated Webhook URL
+**Option 1: Direct Message Mode (Recommended)**
 
-2. **Set Environment Variable**
+Send notifications directly to your Slack DMs for better privacy.
+
+1. **Create Slack App & Get Credentials**
+   - Visit https://api.slack.com/apps
+   - Create app, add `chat:write` scope
+   - Copy Bot Token (starts with `xoxb-`) and your Member ID
+
+2. **Install Dependencies**
    ```bash
-   export SLACK_WEBHOOK_URL="https://hooks.slack.com/services/YOUR/WEBHOOK/URL"
+   pip install slack-sdk
+   ```
+
+3. **Set Environment Variables**
+   ```bash
+   export SLACK_CLAUDE_CODE_BOT_TOKEN="xoxb-your-token"
+   export SLACK_MEMBER_ID="U01234567"
    # Add to ~/.bashrc or ~/.zshrc to make it permanent
    ```
 
-3. **Install the Hook Script**
+4. **Install & Configure**
    ```bash
    cp hooks/claude_slack_notifier.py ~/bin/
    chmod +x ~/bin/claude_slack_notifier.py
    ```
 
-4. **Configure Claude Code**
-   
-   Copy the example configuration:
-   ```bash
-   # For minimal setup (recommended)
-   cat hooks/hooks_minimal.json
-   # Or for full setup
-   cat hooks/hooks_example.json
+   Add to `~/.claude/settings.json`:
+   ```json
+   {
+     "hooks": {
+       "Notification": [{
+         "matcher": "",
+         "hooks": [{
+           "type": "command",
+           "command": "python3 ~/bin/claude_slack_notifier.py --event-type notification --mode dm"
+         }]
+       }],
+       "Stop": [{
+         "matcher": "",
+         "hooks": [{
+           "type": "command",
+           "command": "python3 ~/bin/claude_slack_notifier.py --event-type stop --mode dm"
+         }]
+       }]
+     }
+   }
    ```
-   
-   Add to `~/.claude/settings.json`
 
-5. **Activate in Claude Code**
+5. **Activate**
    ```
    /hooks
    ```
-   Review and approve the configuration.
+
+**Option 2: Webhook Mode**
+
+Send notifications to a Slack channel.
+
+1. Get Webhook URL from https://api.slack.com/apps
+2. Set `export SLACK_WEBHOOK_URL="..."`
+3. Use `--mode webhook` in commands (see [hooks/README.md](./hooks/README.md))
 
 ### Supported Events
 
@@ -131,7 +159,7 @@ This repository includes a powerful hooks system that enables **real-time Slack 
 ### Documentation
 
 For detailed setup instructions, configuration options, and troubleshooting, see:
-- [Hooks README](./hooks/README.md) - Complete documentation (Chinese)
+- [Hooks README](./hooks/README.md) - Complete documentation with both DM and Webhook setup
 - [Configuration Examples](./hooks/) - Sample configuration files
 
 ## 🚀 Installation
@@ -175,8 +203,9 @@ Some commands have external dependencies:
 - `/pr`: Requires GitHub CLI (`gh`)
 
 ### Hooks
-- Python 3.6+ (for Slack notifications)
-- Slack Webhook URL (get from https://api.slack.com/apps)
+- Python 3.6+
+- **DM Mode** (recommended): `slack-sdk` library + Slack Bot Token + Member ID
+- **Webhook Mode**: Slack Webhook URL (no additional dependencies)
 
 ## 🤝 Contributing
 
@@ -196,6 +225,8 @@ MIT License - feel free to use and modify these commands for your needs.
 - [Slash Commands Guide](https://docs.claude.com/en/docs/claude-code/slash-commands)
 - [Hooks Documentation](https://docs.claude.com/en/docs/claude-code/hooks)
 
-### External APIs
+### External APIs & SDKs
+- [Slack API Documentation](https://api.slack.com/methods/chat.postMessage)
 - [Slack Webhooks Documentation](https://api.slack.com/messaging/webhooks)
 - [Slack Block Kit Builder](https://app.slack.com/block-kit-builder)
+- [slack-sdk Documentation](https://slack.dev/python-slack-sdk/)
