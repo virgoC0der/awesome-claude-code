@@ -1,6 +1,6 @@
-# Claude Code Slash Commands
+# Awesome Claude Code
 
-A collection of custom slash commands for [Claude Code](https://claude.com/claude-code) to streamline development workflows and enhance productivity.
+A collection of powerful tools for [Claude Code](https://claude.com/claude-code) including custom slash commands and hooks to streamline development workflows and enhance productivity.
 
 ## 📋 Available Commands
 
@@ -64,6 +64,76 @@ Transforms PRDs and requirements into comprehensive technical solutions:
 - Integration planning
 - Implementation roadmap
 
+## 🔔 Hooks
+
+This repository includes a powerful hooks system that enables **real-time Slack notifications** for Claude Code events, helping you stay informed when:
+- Claude Code needs your approval for an action
+- Tasks are completed and ready for review
+- Important events occur during development
+
+### Features
+
+- 🔔 **Automatic Notifications**: Get Slack alerts when Claude Code requires human intervention
+- 🎨 **Rich Messages**: Beautiful notifications using Slack Block Kit
+- ⚙️ **Flexible Configuration**: Support for multiple event types with custom triggers
+- 🔒 **Secure**: Sensitive information managed through environment variables
+- 📦 **Zero Dependencies**: Uses only Python standard library
+
+### Quick Start
+
+1. **Get Slack Webhook URL**
+   - Visit https://api.slack.com/apps
+   - Create a new app and enable Incoming Webhooks
+   - Copy the generated Webhook URL
+
+2. **Set Environment Variable**
+   ```bash
+   export SLACK_WEBHOOK_URL="https://hooks.slack.com/services/YOUR/WEBHOOK/URL"
+   # Add to ~/.bashrc or ~/.zshrc to make it permanent
+   ```
+
+3. **Install the Hook Script**
+   ```bash
+   cp hooks/claude_slack_notifier.py ~/bin/
+   chmod +x ~/bin/claude_slack_notifier.py
+   ```
+
+4. **Configure Claude Code**
+   
+   Copy the example configuration:
+   ```bash
+   # For minimal setup (recommended)
+   cat hooks/hooks_minimal.json
+   # Or for full setup
+   cat hooks/hooks_example.json
+   ```
+   
+   Add to `~/.claude/settings.json`
+
+5. **Activate in Claude Code**
+   ```
+   /hooks
+   ```
+   Review and approve the configuration.
+
+### Supported Events
+
+| Event | Trigger | Recommended |
+|-------|---------|-------------|
+| `Notification` | Claude Code requests approval | ✅ |
+| `Stop` | Task completion | ✅ |
+| `UserPromptSubmit` | New task submitted | Optional |
+| `PreToolUse` | Before tool execution | Optional |
+| `PostToolUse` | After tool execution | Optional |
+| `PreCompaction` | Before context compression | Optional |
+| `SessionStart` | Session begins | Optional |
+
+### Documentation
+
+For detailed setup instructions, configuration options, and troubleshooting, see:
+- [Hooks README](./hooks/README.md) - Complete documentation (Chinese)
+- [Configuration Examples](./hooks/) - Sample configuration files
+
 ## 🚀 Installation
 
 1. Clone this repository:
@@ -98,10 +168,15 @@ Each command is defined in a Markdown file in the `commands/` directory. You can
 
 ## 📚 Requirements
 
+### Commands
 Some commands have external dependencies:
 - `/repo-analyze`: Requires [Gemini CLI](https://github.com/google-gemini/gemini-cli)
 - `/fix-jira`: Requires Atlassian MCP integration
 - `/pr`: Requires GitHub CLI (`gh`)
+
+### Hooks
+- Python 3.6+ (for Slack notifications)
+- Slack Webhook URL (get from https://api.slack.com/apps)
 
 ## 🤝 Contributing
 
@@ -116,5 +191,11 @@ MIT License - feel free to use and modify these commands for your needs.
 
 ## 🔗 Links
 
+### Claude Code Official Docs
 - [Claude Code Documentation](https://docs.claude.com/en/docs/claude-code)
 - [Slash Commands Guide](https://docs.claude.com/en/docs/claude-code/slash-commands)
+- [Hooks Documentation](https://docs.claude.com/en/docs/claude-code/hooks)
+
+### External APIs
+- [Slack Webhooks Documentation](https://api.slack.com/messaging/webhooks)
+- [Slack Block Kit Builder](https://app.slack.com/block-kit-builder)
