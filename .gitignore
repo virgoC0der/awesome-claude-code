@@ -22,3 +22,5 @@ temp/
 *.tmp
 
 .env
+
+uv.lock
