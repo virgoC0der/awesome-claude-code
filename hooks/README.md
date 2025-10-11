@@ -16,8 +16,6 @@ A lightweight tool for sending Slack notifications when Claude Code requires hum
 | File | Description |
 |------|-------------|
 | `claude_slack_notifier.py` | Main notification script |
-| `quick_install.sh` | Quick installation script |
-| `SETUP_GUIDE.md` | Detailed installation and configuration guide |
 | `hooks_minimal.json` | Minimal configuration example (recommended) |
 | `hooks_example.json` | Complete configuration example |
 
@@ -356,7 +354,6 @@ pip3 install slack-sdk
 
 ## 📚 Resources
 
-- [Complete Setup Guide](./SETUP_GUIDE.md)
 - [Claude Code Official Documentation](https://docs.claude.com/en/docs/claude-code/hooks)
 - [Slack API Documentation](https://api.slack.com/methods/chat.postMessage)
 - [Slack Webhooks Documentation](https://api.slack.com/messaging/webhooks)
@@ -375,6 +372,3 @@ MIT License
 
 Built on Claude Code's hooks system and Slack's Incoming Webhooks API.
 
----
-
-**Tip**: Check `SETUP_GUIDE.md` for more detailed configuration instructions and troubleshooting guide.
