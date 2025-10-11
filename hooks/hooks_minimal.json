@@ -1,0 +1,28 @@
+{
+  "hooks": {
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /path/to/claude_slack_notifier.py --event-type notification",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /path/to/claude_slack_notifier.py --event-type stop",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}
