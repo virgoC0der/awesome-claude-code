@@ -208,9 +208,10 @@ def create_notification_blocks(event_type, details):
                 }
             })
 
-    # Add IDE jump button (if project path is available)
+    # Add IDE jump buttons (if project path is available)
     if path:
-        ide_url = f"goland://open?file={path}"
+        goland_url = f"goland://open?file={path}"
+        cursor_url = f"cursor://file/{path}"
         blocks.append({
             "type": "actions",
             "elements": [
@@ -221,8 +222,17 @@ def create_notification_blocks(event_type, details):
                         "text": "🚀 Open in GoLand",
                         "emoji": True
                     },
-                    "url": ide_url,
+                    "url": goland_url,
                     "style": "primary"
+                },
+                {
+                    "type": "button",
+                    "text": {
+                        "type": "plain_text",
+                        "text": "✨ Open in Cursor",
+                        "emoji": True
+                    },
+                    "url": cursor_url
                 }
             ]
         })
